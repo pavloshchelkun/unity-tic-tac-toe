@@ -1,19 +1,35 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace Assets.Scripts
 {
     public class Board : MonoBehaviour
     {
-        public const int ROWS = 3;
-        public const int COLS = 3;
+        private const int ROWS = 3;
+        private const int COLS = 3;
 
-        [SerializeField]
-        private GameObject cellPrefab;
-
-        [SerializeField]
-        private float cellOffset = 1.5f;
+        public GameObject cellPrefab;
+        public float cellOffset = 1.5f;
 
         private Cell[,] cells = new Cell[ROWS, COLS];
+
+        private Cell lastChangedCell;
+
+        private Seed currentPlayer;
+
+        private event Action<Seed> onBoardChange;
+
+        public void Init(Action<Seed> onBoardChangeAction)
+        {
+            CreateCells();
+            SetPlayer(Seed.Empty);
+            onBoardChange = onBoardChangeAction;
+        }
+
+        public void SetPlayer(Seed seed)
+        {
+            currentPlayer = seed;
+        }
 
         public void Clear()
         {
@@ -21,9 +37,11 @@ namespace Assets.Scripts
             {
                 for (int col = 0; col < COLS; col++)
                 {
-                    cells[row, col].Init(row, col);
+                    cells[row, col].Clear();
                 }
             }
+
+            lastChangedCell = null;
         }
 
         public bool IsDraw()
@@ -32,7 +50,7 @@ namespace Assets.Scripts
             {
                 for (int col = 0; col < COLS; col++)
                 {
-                    if (cells[row, col].CurrentState == Cell.State.Empty)
+                    if (cells[row, col].Content == Seed.Empty)
                     {
                         return false;
                     }
@@ -42,14 +60,68 @@ namespace Assets.Scripts
             return true;
         }
 
-        public bool HasWon(Cell cell)
+        public bool HasWon(Seed seed)
         {
-            return true;
+            if (lastChangedCell == null)
+            {
+                return false;
+            }
+
+            return HasWonInTheRow(seed)
+                || HasWonInTheColumn(seed)
+                || HasWonInTheDiagonal(seed)
+                || HasWonInTheOppositeDiagonal(seed);
+        }
+
+        private bool HasWonInTheRow(Seed seed)
+        {
+            int row = lastChangedCell.Row;
+
+            return cells[row, 0].HasSeed(seed) 
+                && cells[row, 1].HasSeed(seed) 
+                && cells[row, 2].HasSeed(seed);
+        }
+
+        private bool HasWonInTheColumn(Seed seed)
+        {
+            int col = lastChangedCell.Col;
+
+            return cells[0, col].HasSeed(seed)
+                && cells[1, col].HasSeed(seed)
+                && cells[2, col].HasSeed(seed);
+        }
+
+        private bool HasWonInTheDiagonal(Seed seed)
+        {
+            return cells[0, 0].HasSeed(seed)
+                && cells[1, 1].HasSeed(seed)
+                && cells[2, 2].HasSeed(seed);
+        }
+
+        private bool HasWonInTheOppositeDiagonal(Seed seed)
+        {
+            return cells[0, 2].HasSeed(seed)
+                && cells[1, 1].HasSeed(seed)
+                && cells[2, 0].HasSeed(seed);
+        }
+
+        private void OnCellClick(Cell cell)
+        {
+            if (currentPlayer != Seed.Empty && cell.IsEmpty)
+            {
+                cell.Set(currentPlayer);
+                lastChangedCell = cell;
+
+                if (onBoardChange != null)
+                {
+                    onBoardChange(currentPlayer);
+                }
+            }
         }
 
         private void CreateCells()
         {
-            Transform container = (new GameObject("cells")).transform;
+            Transform container = (new GameObject("Cells")).transform;
             
             container.transform.parent = transform;
             container.transform.localPosition = new Vector3(-cellOffset, -cellOffset, 0f);
@@ -64,16 +136,11 @@ namespace Assets.Scripts
                     cell.transform.parent = container;
                     cell.transform.localPosition = new Vector3(col * cellOffset, row * cellOffset, 0f);
 
-                    cell.Init(row, col);
+                    cell.Init(row, col, OnCellClick);
 
                     cells[row, col] = cell;
                 }
             }
-        }
-
-        private void Awake()
-        {
-            CreateCells();
         }
     }
 }

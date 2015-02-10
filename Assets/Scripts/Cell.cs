@@ -1,53 +1,50 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace Assets.Scripts
 {
     public class Cell : MonoBehaviour
     {
-        public enum State
-        {
-            Empty,
-            Cross,
-            Nought
-        }
+        public GameObject spriteCross;
+        public GameObject spriteNought;
 
-        [SerializeField]
-        private GameObject spriteCross;
-
-        [SerializeField]
-        private GameObject spriteNought;
+        private event Action<Cell> onCellClick;
 
         public int Row { get; private set; }
 
         public int Col { get; private set; }
 
-        public State CurrentState { get; private set; }
+        public Seed Content { get; private set; }
 
-        public void Init(int row, int col)
+        public bool IsEmpty { get { return Content == Seed.Empty; } }
+
+        public void Init(int row, int col, Action<Cell> onCellClickAction)
         {
             Row = row;
             Col = col;
 
-            name = string.Format("cell [{0}, {1}]", row, col);
+            name = string.Format("Cell [{0}, {1}]", row, col);
+
+            onCellClick = onCellClickAction;
 
             Clear();
         }
 
-        public void Set(State state)
+        public void Set(Seed seed)
         {
-            CurrentState = state;
+            Content = seed;
 
-            switch (state)
+            switch (seed)
             {
-                case State.Empty:
+                case Seed.Empty:
                     spriteCross.SetActive(false);
                     spriteNought.SetActive(false);
                     break;
-                case State.Cross:
+                case Seed.Cross:
                     spriteCross.SetActive(true);
                     spriteNought.SetActive(false);
                     break;
-                case State.Nought:
+                case Seed.Nought:
                     spriteCross.SetActive(false);
                     spriteNought.SetActive(true);
                     break;
@@ -56,12 +53,20 @@ namespace Assets.Scripts
 
         public void Clear()
         {
-            Set(State.Empty);
+            Set(Seed.Empty);
         }
 
-        public void OnClick()
+        public bool HasSeed(Seed seed)
         {
-            Set(State.Cross);
+            return Content == seed;
+        }
+        
+        private void OnMouseDown()
+        {
+            if (onCellClick != null)
+            {
+                onCellClick(this);
+            }
         }
     }
 }
