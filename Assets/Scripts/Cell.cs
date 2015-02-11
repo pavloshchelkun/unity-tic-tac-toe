@@ -1,9 +1,10 @@
 ﻿using System;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace Assets.Scripts
 {
-    public class Cell : MonoBehaviour
+    public class Cell : MonoBehaviour, IPointerClickHandler
     {
         public GameObject spriteCross;
         public GameObject spriteNought;
@@ -61,7 +62,7 @@ namespace Assets.Scripts
             return Content == seed;
         }
         
-        private void OnMouseDown()
+        public void OnPointerClick(PointerEventData eventData)
         {
             if (onCellClick != null)
             {
