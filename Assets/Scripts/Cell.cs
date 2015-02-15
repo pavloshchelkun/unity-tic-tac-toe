@@ -4,7 +4,7 @@ using UnityEngine.EventSystems;
 
 namespace Assets.Scripts
 {
-    public class Cell : MonoBehaviour, IPointerClickHandler
+    public class Cell : CoreBehaviour, IPointerClickHandler
     {
         public GameObject spriteCross;
         public GameObject spriteNought;

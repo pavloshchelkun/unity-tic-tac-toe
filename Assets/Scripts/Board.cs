@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Assets.Scripts
 {
-    public class Board : MonoBehaviour
+    public class Board : CoreBehaviour
     {
         private const int ROWS = 3;
         private const int COLS = 3;

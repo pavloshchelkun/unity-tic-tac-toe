@@ -1,4 +1,5 @@
-﻿using UnityEngine.UI;
+﻿using Assets.Scripts.Signals;
+using UnityEngine.UI;
 
 namespace Assets.Scripts.UI
 {
@@ -9,27 +10,26 @@ namespace Assets.Scripts.UI
         public void OnNewGame()
         {
             Hide();
-            Game.Instance.NewGame();
+            UISignals.OnStartNewGameSignal.Dispatch();
         }
 
-        private void Start()
+        protected override void Start()
         {
-            Hide();
+            base.Start();
+
+            GameSignals.OnGameResultSignal.AddListener(OnGameResult);
         }
 
-        private void Update()
+        protected override void OnDestroy()
         {
-            if (!IsShown && !Game.Instance.IsPlaying)
-            {
-                Show();
-            }
+            base.OnDestroy();
+
+            GameSignals.OnGameResultSignal.RemoveListener(OnGameResult);
         }
 
-        public override void Show()
+        private void OnGameResult(Game game)
         {
-            base.Show();
-
-            switch (Game.Instance.CurrentState)
+            switch (game.CurrentState)
             {
                 case GameState.CrossWin:
                     label.text = "X WIN!";
@@ -41,6 +41,8 @@ namespace Assets.Scripts.UI
                     label.text = "DRAW!";
                     break;
             }
+
+            Show();
         }
     }
 }

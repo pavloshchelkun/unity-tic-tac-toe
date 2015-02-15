@@ -1,23 +1,16 @@
-﻿using UnityEngine;
+﻿using Assets.Scripts.Signals;
 
 namespace Assets.Scripts
 {
-    public class Game : MonoBehaviour
+    public class Game : CoreBehaviour
     {
-        public static Game Instance { get; private set; }
-
         public Board board;
 
-        private GameState currentState;
-
-        public GameState CurrentState
-        {
-            get { return currentState; }
-        }
+        public GameState CurrentState { get; private set; }
 
         public bool IsPlaying
         {
-            get { return currentState == GameState.Playing; }
+            get { return CurrentState == GameState.Playing; }
         }
 
         public int Player1Score { get; private set; }
@@ -29,7 +22,9 @@ namespace Assets.Scripts
             board.gameObject.SetActive(true);
             board.Clear();
             board.SetPlayer(Seed.Cross);
-            currentState = GameState.Playing;
+            CurrentState = GameState.Playing;
+
+            GameSignals.OnGameStartSignal.Dispatch(this);
         }
 
         public void ResetScore()
@@ -38,21 +33,46 @@ namespace Assets.Scripts
             Player2Score = 0;
         }
 
-        private void Awake()
+        protected override void Start()
         {
-            if (Instance == null)
-            {
-                Instance = this;
-            }
-            else
-            {
-                Destroy(gameObject);
-            }
+            base.Start();
 
-            currentState = GameState.Playing;
+            CurrentState = GameState.Playing;
 
             board.Init(OnBoardChange);
             board.SetPlayer(Seed.Empty);
+            board.gameObject.SetActive(false);
+
+            UISignals.OnStartOnlineGameSignal.AddListener(OnStartOnlineGame);
+            UISignals.OnStartOfflineGameSignal.AddListener(OnStartOfflineGame);
+            UISignals.OnBackToMainMenuSignal.AddListener(OnBackToMainMenu);
+            UISignals.OnStartNewGameSignal.AddListener(NewGame);
+        }
+
+        protected override void OnDestroy()
+        {
+            base.OnDestroy();
+
+            UISignals.OnStartOnlineGameSignal.RemoveListener(OnStartOnlineGame);
+            UISignals.OnStartOfflineGameSignal.RemoveListener(OnStartOfflineGame);
+            UISignals.OnBackToMainMenuSignal.RemoveListener(OnBackToMainMenu);
+            UISignals.OnStartNewGameSignal.RemoveListener(NewGame);
+        }
+
+        private void OnStartOnlineGame()
+        {
+            UISignals.OnBackToMainMenuSignal.Dispatch();
+        }
+
+        private void OnStartOfflineGame()
+        {
+            ResetScore();
+            NewGame();
+        }
+
+        private void OnBackToMainMenu()
+        {
+            board.gameObject.SetActive(false);
         }
 
         private void OnBoardChange(Seed player)
@@ -62,20 +82,26 @@ namespace Assets.Scripts
                 switch (player)
                 {
                     case Seed.Cross:
-                        currentState = GameState.CrossWin;
+                        CurrentState = GameState.CrossWin;
                         Player1Score++;
                         break;
                     case Seed.Nought:
-                        currentState = GameState.NoughtWin;
+                        CurrentState = GameState.NoughtWin;
                         Player2Score++;
                         break;
                 }
+
                 board.SetPlayer(Seed.Empty);
+
+                GameSignals.OnGameResultSignal.Dispatch(this);
             }
             else if (board.IsDraw())
             {
-                currentState = GameState.Draw;
+                CurrentState = GameState.Draw;
+
                 board.SetPlayer(Seed.Empty);
+
+                GameSignals.OnGameResultSignal.Dispatch(this);
             }
             else
             {

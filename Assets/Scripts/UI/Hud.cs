@@ -1,4 +1,5 @@
-﻿using UnityEngine.UI;
+﻿using Assets.Scripts.Signals;
+using UnityEngine.UI;
 
 namespace Assets.Scripts.UI
 {
@@ -12,23 +13,45 @@ namespace Assets.Scripts.UI
         {
             Hide();
             mainMenu.Show();
-            Game.Instance.board.gameObject.SetActive(false);
+
+            UISignals.OnBackToMainMenuSignal.Dispatch();
         }
 
         public void OnRestart()
         {
-            Game.Instance.NewGame();
+            UISignals.OnStartOfflineGameSignal.Dispatch();
         }
 
-        private void Start()
+        protected override void Start()
         {
-            Hide();
+            base.Start();
+
+            GameSignals.OnGameStartSignal.AddListener(OnGameStart);
+            GameSignals.OnGameResultSignal.AddListener(UpdateGameScore);
+
+            UISignals.OnBackToMainMenuSignal.AddListener(Hide);
         }
 
-        private void Update()
+        protected override void OnDestroy()
         {
-            player1Score.text = "Payer 1: " + Game.Instance.Player1Score;
-            player2Score.text = "Payer 2: " + Game.Instance.Player2Score;
+            base.OnDestroy();
+
+            GameSignals.OnGameStartSignal.RemoveListener(OnGameStart);
+            GameSignals.OnGameResultSignal.RemoveListener(UpdateGameScore);
+
+            UISignals.OnBackToMainMenuSignal.RemoveListener(Hide);
+        }
+
+        private void OnGameStart(Game game)
+        {
+            Show();
+            UpdateGameScore(game);
+        }
+
+        private void UpdateGameScore(Game game)
+        {
+            player1Score.text = "Payer 1: " + game.Player1Score;
+            player2Score.text = "Payer 2: " + game.Player2Score;
         }
     }
 }
