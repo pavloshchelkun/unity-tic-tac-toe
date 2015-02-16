@@ -1,6 +1,4 @@
-﻿using Assets.Scripts.Signals;
-
-namespace Assets.Scripts.UI
+﻿namespace Assets.Scripts.UI
 {
     public class MainMenu : BasePanel
     {
@@ -10,20 +8,20 @@ namespace Assets.Scripts.UI
         public void OnOnlineGame()
         {
             Hide();
-            UISignals.OnStartOnlineGameSignal.Dispatch();
+            Game.Instance.PlayOnline();
         }
 
         public void OnOfflineGame()
         {
             Hide();
-            UISignals.OnStartOfflineGameSignal.Dispatch();
+            Game.Instance.PlayOffline();
         }
 
         protected override void Start()
         {
             base.Start();
 
-            UISignals.OnBackToMainMenuSignal.AddListener(OnBackToMainMenu);
+            Game.Instance.OnGameQuitSignal.AddListener(Show);
 
             Show();
         }
@@ -32,12 +30,7 @@ namespace Assets.Scripts.UI
         {
             base.OnDestroy();
 
-            UISignals.OnBackToMainMenuSignal.RemoveListener(OnBackToMainMenu);
-        }
-
-        private void OnBackToMainMenu()
-        {
-            Show();
+            Game.Instance.OnGameQuitSignal.RemoveListener(Show);
         }
     }
 }

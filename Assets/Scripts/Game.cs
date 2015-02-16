@@ -1,9 +1,17 @@
-﻿using Assets.Scripts.Signals;
+﻿using Assets.Scripts.Network;
+using Assets.Scripts.Signals;
+using UnityEngine;
 
 namespace Assets.Scripts
 {
     public class Game : CoreBehaviour
     {
+        public static Game Instance { get; private set; }
+
+        public readonly Signal<Game> OnGameStartSignal = new Signal<Game>();
+        public readonly Signal<Game> OnGameResultSignal = new Signal<Game>();
+        public readonly Signal OnGameQuitSignal = new Signal();
+
         public Board board;
 
         public GameState CurrentState { get; private set; }
@@ -17,6 +25,23 @@ namespace Assets.Scripts
 
         public int Player2Score { get; private set; }
 
+        public void PlayOnline()
+        {
+            NetworkMediator.Instance.Connect();
+        }
+
+        public void PlayOffline()
+        {
+            ResetScore();
+            NewGame();
+        }
+
+        public void Quit()
+        {
+            HideBoard();
+            OnGameQuitSignal.Dispatch();
+        }
+
         public void NewGame()
         {
             board.gameObject.SetActive(true);
@@ -24,13 +49,31 @@ namespace Assets.Scripts
             board.SetPlayer(Seed.Cross);
             CurrentState = GameState.Playing;
 
-            GameSignals.OnGameStartSignal.Dispatch(this);
+            OnGameStartSignal.Dispatch(this);
         }
 
         public void ResetScore()
         {
             Player1Score = 0;
             Player2Score = 0;
+        }
+
+        public void HideBoard()
+        {
+            board.gameObject.SetActive(false);
+        }
+
+        protected override void Awake()
+        {
+            base.Awake();
+            if (Instance == null)
+            {
+                Instance = this;
+            }
+            else
+            {
+                Destroy(gameObject);
+            }
         }
 
         protected override void Start()
@@ -43,36 +86,19 @@ namespace Assets.Scripts
             board.SetPlayer(Seed.Empty);
             board.gameObject.SetActive(false);
 
-            UISignals.OnStartOnlineGameSignal.AddListener(OnStartOnlineGame);
-            UISignals.OnStartOfflineGameSignal.AddListener(OnStartOfflineGame);
-            UISignals.OnBackToMainMenuSignal.AddListener(OnBackToMainMenu);
-            UISignals.OnStartNewGameSignal.AddListener(NewGame);
+            NetworkMediator.Instance.OnRemoteBoardChangeSignal.AddListener(OnRemoteBoardChange);
         }
 
         protected override void OnDestroy()
         {
             base.OnDestroy();
 
-            UISignals.OnStartOnlineGameSignal.RemoveListener(OnStartOnlineGame);
-            UISignals.OnStartOfflineGameSignal.RemoveListener(OnStartOfflineGame);
-            UISignals.OnBackToMainMenuSignal.RemoveListener(OnBackToMainMenu);
-            UISignals.OnStartNewGameSignal.RemoveListener(NewGame);
+            NetworkMediator.Instance.OnRemoteBoardChangeSignal.RemoveListener(OnRemoteBoardChange);
         }
 
-        private void OnStartOnlineGame()
+        private void OnRemoteBoardChange(Seed seed, int row, int col)
         {
-            UISignals.OnBackToMainMenuSignal.Dispatch();
-        }
-
-        private void OnStartOfflineGame()
-        {
-            ResetScore();
-            NewGame();
-        }
-
-        private void OnBackToMainMenu()
-        {
-            board.gameObject.SetActive(false);
+            board.SetCell(seed, row, col);
         }
 
         private void OnBoardChange(Seed player)
@@ -93,7 +119,7 @@ namespace Assets.Scripts
 
                 board.SetPlayer(Seed.Empty);
 
-                GameSignals.OnGameResultSignal.Dispatch(this);
+                OnGameResultSignal.Dispatch(this);
             }
             else if (board.IsDraw())
             {
@@ -101,7 +127,7 @@ namespace Assets.Scripts
 
                 board.SetPlayer(Seed.Empty);
 
-                GameSignals.OnGameResultSignal.Dispatch(this);
+                OnGameResultSignal.Dispatch(this);
             }
             else
             {

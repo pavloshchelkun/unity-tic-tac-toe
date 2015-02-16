@@ -1,5 +1,4 @@
-﻿using Assets.Scripts.Signals;
-using UnityEngine.UI;
+﻿using UnityEngine.UI;
 
 namespace Assets.Scripts.UI
 {
@@ -10,21 +9,21 @@ namespace Assets.Scripts.UI
         public void OnNewGame()
         {
             Hide();
-            UISignals.OnStartNewGameSignal.Dispatch();
+            Game.Instance.NewGame();
         }
 
         protected override void Start()
         {
             base.Start();
 
-            GameSignals.OnGameResultSignal.AddListener(OnGameResult);
+            Game.Instance.OnGameResultSignal.AddListener(OnGameResult);
         }
 
         protected override void OnDestroy()
         {
             base.OnDestroy();
 
-            GameSignals.OnGameResultSignal.RemoveListener(OnGameResult);
+            Game.Instance.OnGameResultSignal.RemoveListener(OnGameResult);
         }
 
         private void OnGameResult(Game game)

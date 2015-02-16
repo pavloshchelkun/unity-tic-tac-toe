@@ -1,45 +1,39 @@
-﻿using Assets.Scripts.Signals;
-using UnityEngine.UI;
+﻿using UnityEngine.UI;
 
 namespace Assets.Scripts.UI
 {
     public class Hud : BasePanel
     {
-        public MainMenu mainMenu;
         public Text player1Score;
         public Text player2Score;
 
         public void OnBack()
         {
             Hide();
-            mainMenu.Show();
-
-            UISignals.OnBackToMainMenuSignal.Dispatch();
+            Game.Instance.Quit();
         }
 
         public void OnRestart()
         {
-            UISignals.OnStartOfflineGameSignal.Dispatch();
+            Game.Instance.NewGame();
         }
 
         protected override void Start()
         {
             base.Start();
 
-            GameSignals.OnGameStartSignal.AddListener(OnGameStart);
-            GameSignals.OnGameResultSignal.AddListener(UpdateGameScore);
-
-            UISignals.OnBackToMainMenuSignal.AddListener(Hide);
+            Game.Instance.OnGameStartSignal.AddListener(OnGameStart);
+            Game.Instance.OnGameResultSignal.AddListener(UpdateGameScore);
+            Game.Instance.OnGameQuitSignal.AddListener(Hide);
         }
 
         protected override void OnDestroy()
         {
             base.OnDestroy();
 
-            GameSignals.OnGameStartSignal.RemoveListener(OnGameStart);
-            GameSignals.OnGameResultSignal.RemoveListener(UpdateGameScore);
-
-            UISignals.OnBackToMainMenuSignal.RemoveListener(Hide);
+            Game.Instance.OnGameStartSignal.RemoveListener(OnGameStart);
+            Game.Instance.OnGameResultSignal.RemoveListener(UpdateGameScore);
+            Game.Instance.OnGameQuitSignal.RemoveListener(Hide);
         }
 
         private void OnGameStart(Game game)

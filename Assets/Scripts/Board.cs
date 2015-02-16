@@ -31,6 +31,12 @@ namespace Assets.Scripts
             currentPlayer = seed;
         }
 
+        public void SetCell(Seed seed, int row, int col)
+        {
+            SetPlayer(seed);
+            OnCellClick(cells[row, col]);
+        }
+
         public void Clear()
         {
             for (int row = 0; row < ROWS; row++)
