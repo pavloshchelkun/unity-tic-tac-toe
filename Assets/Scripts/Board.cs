@@ -17,9 +17,9 @@ namespace Assets.Scripts
 
         private Seed currentPlayer;
 
-        private event Action<Seed> onBoardChange;
+        private event Action<Seed, int, int> onBoardChange;
 
-        public void Init(Action<Seed> onBoardChangeAction)
+        public void Init(Action<Seed, int, int> onBoardChangeAction)
         {
             CreateCells();
             SetPlayer(Seed.Empty);
@@ -120,7 +120,7 @@ namespace Assets.Scripts
 
                 if (onBoardChange != null)
                 {
-                    onBoardChange(currentPlayer);
+                    onBoardChange(currentPlayer, cell.Row, cell.Col);
                 }
             }
         }

@@ -2,9 +2,6 @@
 {
     public class MainMenu : BasePanel
     {
-        public Hud hud;
-        public Lobby lobby;
-
         public void OnOnlineGame()
         {
             Hide();

@@ -45,27 +45,16 @@ namespace Assets.Scripts.UI
         {
             base.Start();
 
-            NetworkMediator.Instance.OnConnectedToMasterSignal.AddListener(OnConnectedToMaster);
-            NetworkMediator.Instance.OnJoinedRoomSignal.AddListener(OnJoinedRoom);
+            NetworkMediator.Instance.OnConnectedToMasterSignal.AddListener(Show);
+            NetworkMediator.Instance.OnJoinedRoomSignal.AddListener(Hide);
         }
 
         protected override void OnDestroy()
         {
             base.OnDestroy();
 
-            NetworkMediator.Instance.OnConnectedToMasterSignal.RemoveListener(OnConnectedToMaster);
-            NetworkMediator.Instance.OnJoinedRoomSignal.RemoveListener(OnJoinedRoom);
-        }
-
-        private void OnConnectedToMaster()
-        {
-            Show();
-        }
-
-        private void OnJoinedRoom()
-        {
-            Hide();
-            Game.Instance.NewGame();
+            NetworkMediator.Instance.OnConnectedToMasterSignal.RemoveListener(Show);
+            NetworkMediator.Instance.OnJoinedRoomSignal.RemoveListener(Hide);
         }
     }
 }

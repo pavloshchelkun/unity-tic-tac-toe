@@ -20,10 +20,10 @@ namespace Assets.Scripts
         {
             get { return CurrentState == GameState.Playing; }
         }
+        
+        public Player Player1 { get; private set; }
 
-        public int Player1Score { get; private set; }
-
-        public int Player2Score { get; private set; }
+        public Player Player2 { get; private set; }
 
         public void PlayOnline()
         {
@@ -32,7 +32,7 @@ namespace Assets.Scripts
 
         public void PlayOffline()
         {
-            ResetScore();
+            Reset();
             NewGame();
         }
 
@@ -40,6 +40,11 @@ namespace Assets.Scripts
         {
             HideBoard();
             OnGameQuitSignal.Dispatch();
+
+            if (NetworkMediator.Instance.IsConnected)
+            {
+                NetworkMediator.Instance.Disconnect();
+            }
         }
 
         public void NewGame()
@@ -52,10 +57,10 @@ namespace Assets.Scripts
             OnGameStartSignal.Dispatch(this);
         }
 
-        public void ResetScore()
+        public void Reset()
         {
-            Player1Score = 0;
-            Player2Score = 0;
+            Player1 = new Player("Player X", 0, Seed.Cross);
+            Player2 = new Player("Player O", 0, Seed.Nought);
         }
 
         public void HideBoard()
@@ -80,12 +85,16 @@ namespace Assets.Scripts
         {
             base.Start();
 
+            Reset();
+
             CurrentState = GameState.Playing;
 
             board.Init(OnBoardChange);
             board.SetPlayer(Seed.Empty);
             board.gameObject.SetActive(false);
 
+            NetworkMediator.Instance.OnAllPlayersConnectedSignal.AddListener(OnAllPlayersConnected);
+            NetworkMediator.Instance.OnDisconnectedFromMasterSignal.AddListener(OnDisconnectedFromMaster);
             NetworkMediator.Instance.OnRemoteBoardChangeSignal.AddListener(OnRemoteBoardChange);
         }
 
@@ -93,7 +102,36 @@ namespace Assets.Scripts
         {
             base.OnDestroy();
 
+            NetworkMediator.Instance.OnAllPlayersConnectedSignal.RemoveListener(OnAllPlayersConnected);
+            NetworkMediator.Instance.OnDisconnectedFromMasterSignal.RemoveListener(OnDisconnectedFromMaster);
             NetworkMediator.Instance.OnRemoteBoardChangeSignal.RemoveListener(OnRemoteBoardChange);
+        }
+
+        private void OnAllPlayersConnected()
+        {
+            Reset();
+            NewGame();
+
+            Player1.Name = NetworkMediator.Instance.PlayerName;
+            Player2.Name = NetworkMediator.Instance.OpponentName;
+
+            if (NetworkMediator.Instance.IsMaster)
+            {
+                Player1.Type = Seed.Cross;
+                Player2.Type = Seed.Nought;
+                board.SetPlayer(Seed.Cross);
+            }
+            else
+            {
+                Player1.Type = Seed.Nought;
+                Player2.Type = Seed.Cross;
+                board.SetPlayer(Seed.Empty);
+            }
+        }
+
+        private void OnDisconnectedFromMaster()
+        {
+            Quit();
         }
 
         private void OnRemoteBoardChange(Seed seed, int row, int col)
@@ -101,37 +139,42 @@ namespace Assets.Scripts
             board.SetCell(seed, row, col);
         }
 
-        private void OnBoardChange(Seed player)
+        private void OnBoardChange(Seed player, int row, int col)
         {
+            Seed nextPlayer = Seed.Empty;
+
             if (board.HasWon(player))
             {
                 switch (player)
                 {
                     case Seed.Cross:
                         CurrentState = GameState.CrossWin;
-                        Player1Score++;
+                        Player1.Score++;
                         break;
                     case Seed.Nought:
                         CurrentState = GameState.NoughtWin;
-                        Player2Score++;
+                        Player2.Score++;
                         break;
                 }
-
-                board.SetPlayer(Seed.Empty);
 
                 OnGameResultSignal.Dispatch(this);
             }
             else if (board.IsDraw())
             {
                 CurrentState = GameState.Draw;
-
-                board.SetPlayer(Seed.Empty);
-
                 OnGameResultSignal.Dispatch(this);
             }
             else
             {
-                board.SetPlayer(player == Seed.Cross ? Seed.Nought : Seed.Cross);
+                nextPlayer = player == Seed.Cross ? Seed.Nought : Seed.Cross;
+            }
+
+            board.SetPlayer(nextPlayer);
+
+            if (NetworkMediator.Instance.IsConnected && player == Player1.Type)
+            {
+                board.SetPlayer(Seed.Empty);
+                NetworkMediator.Instance.SendBoardChange(player, row, col);
             }
         }
     }

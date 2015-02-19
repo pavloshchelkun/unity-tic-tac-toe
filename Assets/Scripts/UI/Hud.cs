@@ -1,4 +1,5 @@
-﻿using UnityEngine.UI;
+﻿using Assets.Scripts.Network;
+using UnityEngine.UI;
 
 namespace Assets.Scripts.UI
 {
@@ -44,8 +45,8 @@ namespace Assets.Scripts.UI
 
         private void UpdateGameScore(Game game)
         {
-            player1Score.text = "Payer 1: " + game.Player1Score;
-            player2Score.text = "Payer 2: " + game.Player2Score;
+            player1Score.text = game.Player1.ToString();
+            player2Score.text = game.Player2.ToString();
         }
     }
 }

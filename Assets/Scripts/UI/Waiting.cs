@@ -14,19 +14,16 @@ namespace Assets.Scripts.UI
         {
             base.Start();
 
-            NetworkMediator.Instance.OnJoinedRoomSignal.AddListener(OnJoinedRoom);
+            NetworkMediator.Instance.OnJoinedRoomSignal.AddListener(Show);
+            NetworkMediator.Instance.OnAllPlayersConnectedSignal.AddListener(Hide);
         }
 
         protected override void OnDestroy()
         {
             base.OnDestroy();
 
-            NetworkMediator.Instance.OnJoinedRoomSignal.RemoveListener(OnJoinedRoom);
-        }
-
-        private void OnJoinedRoom()
-        {
-            Show();
+            NetworkMediator.Instance.OnJoinedRoomSignal.RemoveListener(Show);
+            NetworkMediator.Instance.OnAllPlayersConnectedSignal.RemoveListener(Hide);
         }
 
         protected override void Update()
