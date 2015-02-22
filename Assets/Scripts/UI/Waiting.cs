@@ -16,6 +16,7 @@ namespace Assets.Scripts.UI
 
             NetworkMediator.Instance.OnJoinedRoomSignal.AddListener(Show);
             NetworkMediator.Instance.OnAllPlayersConnectedSignal.AddListener(Hide);
+            NetworkMediator.Instance.OnDisconnectedFromMasterSignal.AddListener(Hide);
         }
 
         protected override void OnDestroy()
@@ -24,6 +25,7 @@ namespace Assets.Scripts.UI
 
             NetworkMediator.Instance.OnJoinedRoomSignal.RemoveListener(Show);
             NetworkMediator.Instance.OnAllPlayersConnectedSignal.RemoveListener(Hide);
+            NetworkMediator.Instance.OnDisconnectedFromMasterSignal.RemoveListener(Hide);
         }
 
         protected override void Update()

@@ -27,6 +27,7 @@ namespace Assets.Scripts
 
         public void PlayOnline()
         {
+            CurrentState = GameState.Lobby;
             NetworkMediator.Instance.Connect();
         }
 
@@ -38,6 +39,7 @@ namespace Assets.Scripts
 
         public void Quit()
         {
+            CurrentState = GameState.MainMenu;
             HideBoard();
             OnGameQuitSignal.Dispatch();
 
@@ -111,7 +113,7 @@ namespace Assets.Scripts
 
             Reset();
 
-            CurrentState = GameState.Playing;
+            CurrentState = GameState.MainMenu;
 
             board.Init(OnBoardChange);
             board.SetPlayer(Seed.Empty);
@@ -129,6 +131,23 @@ namespace Assets.Scripts
             NetworkMediator.Instance.OnAllPlayersConnectedSignal.RemoveListener(OnAllPlayersConnected);
             NetworkMediator.Instance.OnDisconnectedFromMasterSignal.RemoveListener(OnDisconnectedFromMaster);
             NetworkMediator.Instance.OnRemoteBoardChangeSignal.RemoveListener(OnRemoteBoardChange);
+        }
+
+        protected override void Update()
+        {
+            base.Update();
+
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                if (CurrentState == GameState.MainMenu)
+                {
+                    Application.Quit();
+                }
+                else
+                {
+                    Quit();
+                }
+            }
         }
 
         private void OnAllPlayersConnected()

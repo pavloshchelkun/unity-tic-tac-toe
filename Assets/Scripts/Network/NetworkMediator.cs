@@ -1,4 +1,5 @@
-﻿using Assets.Scripts.Signals;
+﻿using System.Collections.Generic;
+using Assets.Scripts.Signals;
 using UnityEngine;
 
 namespace Assets.Scripts.Network
@@ -113,6 +114,21 @@ namespace Assets.Scripts.Network
         public void LeaveRoom()
         {
             PhotonNetwork.LeaveRoom();
+        }
+
+        public List<string> GetRoomList()
+        {
+            List<string> list = new List<string>();
+
+            foreach (var roomInfo in PhotonNetwork.GetRoomList())
+            {
+                if (roomInfo.playerCount == 1)
+                {
+                    list.Add(roomInfo.name);
+                }
+            }
+
+            return list;
         }
 
         private void OnConnectedToMaster()

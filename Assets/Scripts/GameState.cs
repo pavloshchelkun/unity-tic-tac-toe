@@ -2,6 +2,8 @@
 {
     public enum GameState
     {
+        MainMenu,
+        Lobby,
         Playing,
         Draw,
         CrossWin,
