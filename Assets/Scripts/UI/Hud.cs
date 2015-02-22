@@ -7,6 +7,7 @@ namespace Assets.Scripts.UI
     {
         public Text player1Score;
         public Text player2Score;
+        public Button buttonRestart;
 
         public void OnBack()
         {
@@ -17,6 +18,12 @@ namespace Assets.Scripts.UI
         public void OnRestart()
         {
             Game.Instance.NewGame();
+        }
+
+        public override void Show()
+        {
+            base.Show();
+            buttonRestart.gameObject.SetActive(NetworkMediator.Instance.IsConnected == false);
         }
 
         protected override void Start()

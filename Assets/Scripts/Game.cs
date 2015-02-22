@@ -53,6 +53,30 @@ namespace Assets.Scripts
             board.Clear();
             board.SetPlayer(Seed.Cross);
             CurrentState = GameState.Playing;
+            
+            if (NetworkMediator.Instance.IsConnected)
+            {
+                if (NetworkMediator.Instance.IsMaster)
+                {
+                    Player1.Name = NetworkMediator.Instance.PlayerName;
+                    Player2.Name = NetworkMediator.Instance.OpponentName;
+
+                    Player1.Type = Seed.Cross;
+                    Player2.Type = Seed.Nought;
+                    board.SetPlayer(Seed.Cross);
+
+                    NetworkMediator.Instance.SendNewGameStarted();
+                }
+                else
+                {
+                    Player1.Name = NetworkMediator.Instance.OpponentName;
+                    Player2.Name = NetworkMediator.Instance.PlayerName;
+
+                    Player1.Type = Seed.Nought;
+                    Player2.Type = Seed.Cross;
+                    board.SetPlayer(Seed.Empty);
+                }
+            }
 
             OnGameStartSignal.Dispatch(this);
         }
@@ -111,22 +135,6 @@ namespace Assets.Scripts
         {
             Reset();
             NewGame();
-
-            Player1.Name = NetworkMediator.Instance.PlayerName;
-            Player2.Name = NetworkMediator.Instance.OpponentName;
-
-            if (NetworkMediator.Instance.IsMaster)
-            {
-                Player1.Type = Seed.Cross;
-                Player2.Type = Seed.Nought;
-                board.SetPlayer(Seed.Cross);
-            }
-            else
-            {
-                Player1.Type = Seed.Nought;
-                Player2.Type = Seed.Cross;
-                board.SetPlayer(Seed.Empty);
-            }
         }
 
         private void OnDisconnectedFromMaster()

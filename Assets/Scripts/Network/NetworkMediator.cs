@@ -24,7 +24,7 @@ namespace Assets.Scripts.Network
                 {
                     return PhotonNetwork.playerName;
                 }
-                return "Player 1";
+                return PlayerPrefs.GetString("playerName", "Player" + Random.Range(1, 9999));
             }
             set
             {
@@ -41,7 +41,7 @@ namespace Assets.Scripts.Network
                 {
                     return PhotonNetwork.otherPlayers[0].name;
                 }
-                return "Player 2";
+                return "Player O";
             }
         }
 
@@ -81,7 +81,7 @@ namespace Assets.Scripts.Network
             {
                 OnConnectedToMasterSignal.Dispatch();
 
-                PhotonNetwork.playerName = PlayerPrefs.GetString("playerName", "Player" + Random.Range(1, 9999));
+                PhotonNetwork.playerName = PlayerName;
                 PhotonNetwork.ConnectUsingSettings("v1.0");
             }
             else
@@ -138,9 +138,15 @@ namespace Assets.Scripts.Network
         private void OnJoinedRoom()
         {
             OnJoinedRoomSignal.Dispatch();
+            CheckForAllPlayers();
         }
 
         private void OnPhotonPlayerConnected(PhotonPlayer player)
+        {
+            CheckForAllPlayers();
+        }
+
+        private void CheckForAllPlayers()
         {
             if (PhotonNetwork.room.playerCount == 2)
             {
@@ -153,18 +159,36 @@ namespace Assets.Scripts.Network
             Disconnect();
         }
 
-        public void SendBoardChange(Seed seed, int row, int col)
+        public void SendNewGameStarted()
         {
             if (PhotonNetwork.room != null && PhotonNetwork.room.playerCount == 2)
             {
-                photonView.RPC("OnRemoteBoardChange", PhotonTargets.OthersBuffered, seed, row, col);
+                photonView.RPC("OnNewGameStart", PhotonTargets.OthersBuffered);
             }
         }
 
         [RPC]
-        private void OnRemoteBoardChange(Seed seed, int row, int col)
+        private void OnNewGameStart()
         {
-            OnRemoteBoardChangeSignal.Dispatch(seed, row, col);
+            OnNewGameStartedSignal.Dispatch();
+        }
+
+        public void SendBoardChange(Seed seed, int row, int col)
+        {
+            if (PhotonNetwork.room != null && PhotonNetwork.room.playerCount == 2)
+            {
+                photonView.RPC("OnRemoteBoardChange", PhotonTargets.OthersBuffered, (int)seed, row, col);
+            }
+        }
+
+        [RPC]
+        private void OnRemoteBoardChange(int seed, int row, int col)
+        {
+            OnRemoteBoardChangeSignal.Dispatch((Seed)seed, row, col);
+        }
+
+        private void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+        {
         }
     }
 }

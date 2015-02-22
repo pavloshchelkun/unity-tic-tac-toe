@@ -1,10 +1,12 @@
-﻿using UnityEngine.UI;
+﻿using Assets.Scripts.Network;
+using UnityEngine.UI;
 
 namespace Assets.Scripts.UI
 {
     public class Result : BasePanel
     {
         public Text label;
+        public Button button;
 
         public void OnNewGame()
         {
@@ -12,11 +14,19 @@ namespace Assets.Scripts.UI
             Game.Instance.NewGame();
         }
 
+        public override void Show()
+        {
+            base.Show();
+            button.gameObject.SetActive(!NetworkMediator.Instance.IsConnected || NetworkMediator.Instance.IsMaster);
+        }
+
         protected override void Start()
         {
             base.Start();
 
             Game.Instance.OnGameResultSignal.AddListener(OnGameResult);
+            NetworkMediator.Instance.OnNewGameStartedSignal.AddListener(OnNewGame);
+            NetworkMediator.Instance.OnDisconnectedFromMasterSignal.AddListener(Hide);
         }
 
         protected override void OnDestroy()
@@ -24,6 +34,8 @@ namespace Assets.Scripts.UI
             base.OnDestroy();
 
             Game.Instance.OnGameResultSignal.RemoveListener(OnGameResult);
+            NetworkMediator.Instance.OnNewGameStartedSignal.RemoveListener(OnNewGame);
+            NetworkMediator.Instance.OnDisconnectedFromMasterSignal.RemoveListener(Hide);
         }
 
         private void OnGameResult(Game game)
