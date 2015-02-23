@@ -9,15 +9,9 @@ namespace Assets.Scripts
 
         public new Transform transform { get; private set; }
 
-        protected IGameService GameService
-        {
-            get { return ServiceLocator.GetService<IGameService>(); }
-        }
+        protected IGameService GameService { get; private set; }
 
-        protected INetworkService NetworkService
-        {
-            get { return ServiceLocator.GetService<INetworkService>(); }
-        }
+        protected INetworkService NetworkService { get; private set; }
         
         protected virtual void Awake()
         {
@@ -27,6 +21,8 @@ namespace Assets.Scripts
 
         protected virtual void Start()
         {
+            GameService = ServiceLocator.GetService<IGameService>();
+            NetworkService = ServiceLocator.GetService<INetworkService>();
         }
 
         protected virtual void Update()
