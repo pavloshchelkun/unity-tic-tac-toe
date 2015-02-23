@@ -11,31 +11,31 @@ namespace Assets.Scripts.UI
         public void OnNewGame()
         {
             Hide();
-            Game.Instance.NewGame();
+            GameService.NewGame();
         }
 
-        public override void Show()
+        protected override void Show()
         {
             base.Show();
-            button.gameObject.SetActive(!NetworkMediator.Instance.IsConnected || NetworkMediator.Instance.IsMaster);
+            button.gameObject.SetActive(!NetworkService.IsConnected || NetworkService.IsMaster);
         }
 
         protected override void Start()
         {
             base.Start();
 
-            Game.Instance.OnGameResultSignal.AddListener(OnGameResult);
-            NetworkMediator.Instance.OnNewGameStartedSignal.AddListener(OnNewGame);
-            NetworkMediator.Instance.OnDisconnectedFromMasterSignal.AddListener(Hide);
+            GameService.OnGameResultSignal.AddListener(OnGameResult);
+            NetworkService.OnNewGameStartedSignal.AddListener(OnNewGame);
+            NetworkService.OnDisconnectedFromMasterSignal.AddListener(Hide);
         }
 
         protected override void OnDestroy()
         {
             base.OnDestroy();
 
-            Game.Instance.OnGameResultSignal.RemoveListener(OnGameResult);
-            NetworkMediator.Instance.OnNewGameStartedSignal.RemoveListener(OnNewGame);
-            NetworkMediator.Instance.OnDisconnectedFromMasterSignal.RemoveListener(Hide);
+            GameService.OnGameResultSignal.RemoveListener(OnGameResult);
+            NetworkService.OnNewGameStartedSignal.RemoveListener(OnNewGame);
+            NetworkService.OnDisconnectedFromMasterSignal.RemoveListener(Hide);
         }
 
         private void OnGameResult(Game game)

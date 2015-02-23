@@ -12,36 +12,36 @@ namespace Assets.Scripts.UI
         public void OnBack()
         {
             Hide();
-            Game.Instance.Quit();
+            GameService.Quit();
         }
 
         public void OnRestart()
         {
-            Game.Instance.NewGame();
+            GameService.NewGame();
         }
 
-        public override void Show()
+        protected override void Show()
         {
             base.Show();
-            buttonRestart.gameObject.SetActive(NetworkMediator.Instance.IsConnected == false);
+            buttonRestart.gameObject.SetActive(NetworkService.IsConnected == false);
         }
 
         protected override void Start()
         {
             base.Start();
 
-            Game.Instance.OnGameStartSignal.AddListener(OnGameStart);
-            Game.Instance.OnGameResultSignal.AddListener(UpdateGameScore);
-            Game.Instance.OnGameQuitSignal.AddListener(Hide);
+            GameService.OnGameStartSignal.AddListener(OnGameStart);
+            GameService.OnGameResultSignal.AddListener(UpdateGameScore);
+            GameService.OnGameQuitSignal.AddListener(Hide);
         }
 
         protected override void OnDestroy()
         {
             base.OnDestroy();
 
-            Game.Instance.OnGameStartSignal.RemoveListener(OnGameStart);
-            Game.Instance.OnGameResultSignal.RemoveListener(UpdateGameScore);
-            Game.Instance.OnGameQuitSignal.RemoveListener(Hide);
+            GameService.OnGameStartSignal.RemoveListener(OnGameStart);
+            GameService.OnGameResultSignal.RemoveListener(UpdateGameScore);
+            GameService.OnGameQuitSignal.RemoveListener(Hide);
         }
 
         private void OnGameStart(Game game)

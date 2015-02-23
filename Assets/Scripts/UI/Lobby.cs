@@ -20,48 +20,48 @@ namespace Assets.Scripts.UI
         public void OnBack()
         {
             Hide();
-            Game.Instance.Quit();
+            GameService.Quit();
         }
 
         public void OnChangePlayerName()
         {
-            NetworkMediator.Instance.PlayerName = playerName.text;
+            NetworkService.PlayerName = playerName.text;
         }
         
         public void OnCreateRoom()
         {
-            NetworkMediator.Instance.CreateRoom(createRoomName.text);
+            NetworkService.CreateRoom(createRoomName.text);
         }
 
         public void OnJoinRandomRoom()
         {
-            NetworkMediator.Instance.JoinRandomRoom();
+            NetworkService.JoinRandomRoom();
         }
 
-        public override void Show()
+        protected override void Show()
         {
             base.Show();
 
-            playerName.text = NetworkMediator.Instance.PlayerName;
-            createRoomName.text = NetworkMediator.Instance.PlayerName;
+            playerName.text = NetworkService.PlayerName;
+            createRoomName.text = NetworkService.PlayerName;
         }
 
         protected override void Start()
         {
             base.Start();
 
-            NetworkMediator.Instance.OnConnectedToMasterSignal.AddListener(Show);
-            NetworkMediator.Instance.OnJoinedRoomSignal.AddListener(Hide);
-            NetworkMediator.Instance.OnDisconnectedFromMasterSignal.AddListener(Hide);
+            NetworkService.OnConnectedToMasterSignal.AddListener(Show);
+            NetworkService.OnJoinedRoomSignal.AddListener(Hide);
+            NetworkService.OnDisconnectedFromMasterSignal.AddListener(Hide);
         }
 
         protected override void OnDestroy()
         {
             base.OnDestroy();
 
-            NetworkMediator.Instance.OnConnectedToMasterSignal.RemoveListener(Show);
-            NetworkMediator.Instance.OnJoinedRoomSignal.RemoveListener(Hide);
-            NetworkMediator.Instance.OnDisconnectedFromMasterSignal.RemoveListener(Hide);
+            NetworkService.OnConnectedToMasterSignal.RemoveListener(Show);
+            NetworkService.OnJoinedRoomSignal.RemoveListener(Hide);
+            NetworkService.OnDisconnectedFromMasterSignal.RemoveListener(Hide);
         }
 
         private RoomButton GetRoomButton()
@@ -75,14 +75,16 @@ namespace Assets.Scripts.UI
         {
             base.Update();
 
-            var roomList = NetworkMediator.Instance.GetRoomList();
+            var roomList = NetworkService.GetRoomList();
 
+            // Create more buttons if needed
             for (int i = 0; i < roomList.Count - roomButtonList.Count; i++)
             {
                 var button = GetRoomButton();
                 roomButtonList.Add(button);
             }
 
+            // Update all buttons
             for (int i = 0; i < roomButtonList.Count; i++)
             {
                 if (i < roomList.Count)

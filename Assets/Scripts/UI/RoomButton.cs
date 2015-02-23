@@ -1,10 +1,9 @@
 ﻿using Assets.Scripts.Network;
-using UnityEngine;
 using UnityEngine.UI;
 
 namespace Assets.Scripts.UI
 {
-    public class RoomButton : MonoBehaviour
+    public class RoomButton : CoreBehaviour
     {
         public Text label;
 
@@ -18,7 +17,7 @@ namespace Assets.Scripts.UI
 
         public void OnClick()
         {
-            NetworkMediator.Instance.JoinRoom(room);
+            NetworkService.JoinRoom(room);
         }
     }
 }

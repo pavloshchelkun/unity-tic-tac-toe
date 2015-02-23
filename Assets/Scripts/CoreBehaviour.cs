@@ -1,4 +1,4 @@
-﻿using Assets.Scripts.Signals;
+﻿using Assets.Scripts.Network;
 using UnityEngine;
 
 namespace Assets.Scripts
@@ -8,6 +8,16 @@ namespace Assets.Scripts
         public new GameObject gameObject { get; private set; }
 
         public new Transform transform { get; private set; }
+
+        protected IGameService GameService
+        {
+            get { return ServiceLocator.GetService<IGameService>(); }
+        }
+
+        protected INetworkService NetworkService
+        {
+            get { return ServiceLocator.GetService<INetworkService>(); }
+        }
         
         protected virtual void Awake()
         {

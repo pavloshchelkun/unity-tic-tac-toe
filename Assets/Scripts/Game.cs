@@ -4,15 +4,15 @@ using UnityEngine;
 
 namespace Assets.Scripts
 {
-    public class Game : CoreBehaviour
+    public class Game : CoreBehaviour, IGameService
     {
-        public static Game Instance { get; private set; }
-
-        public readonly Signal<Game> OnGameStartSignal = new Signal<Game>();
-        public readonly Signal<Game> OnGameResultSignal = new Signal<Game>();
-        public readonly Signal OnGameQuitSignal = new Signal();
-
         public Board board;
+
+        public Signal<Game> OnGameStartSignal { get; private set; }
+
+        public Signal<Game> OnGameResultSignal { get; private set; }
+
+        public Signal OnGameQuitSignal { get; private set; }
 
         public GameState CurrentState { get; private set; }
 
@@ -28,7 +28,7 @@ namespace Assets.Scripts
         public void PlayOnline()
         {
             CurrentState = GameState.Lobby;
-            NetworkMediator.Instance.Connect();
+            NetworkService.Connect();
         }
 
         public void PlayOffline()
@@ -36,43 +36,31 @@ namespace Assets.Scripts
             Reset();
             NewGame();
         }
-
-        public void Quit()
-        {
-            CurrentState = GameState.MainMenu;
-            HideBoard();
-            OnGameQuitSignal.Dispatch();
-
-            if (NetworkMediator.Instance.IsConnected)
-            {
-                NetworkMediator.Instance.Disconnect();
-            }
-        }
-
+        
         public void NewGame()
         {
             board.gameObject.SetActive(true);
             board.Clear();
             board.SetPlayer(Seed.Cross);
             CurrentState = GameState.Playing;
-            
-            if (NetworkMediator.Instance.IsConnected)
+
+            if (NetworkService.IsConnected)
             {
-                if (NetworkMediator.Instance.IsMaster)
+                if (NetworkService.IsMaster)
                 {
-                    Player1.Name = NetworkMediator.Instance.PlayerName;
-                    Player2.Name = NetworkMediator.Instance.OpponentName;
+                    Player1.Name = NetworkService.PlayerName;
+                    Player2.Name = NetworkService.OpponentName;
 
                     Player1.Type = Seed.Cross;
                     Player2.Type = Seed.Nought;
                     board.SetPlayer(Seed.Cross);
 
-                    NetworkMediator.Instance.SendNewGameStarted();
+                    NetworkService.SendNewGameStarted();
                 }
                 else
                 {
-                    Player1.Name = NetworkMediator.Instance.OpponentName;
-                    Player2.Name = NetworkMediator.Instance.PlayerName;
+                    Player1.Name = NetworkService.OpponentName;
+                    Player2.Name = NetworkService.PlayerName;
 
                     Player1.Type = Seed.Nought;
                     Player2.Type = Seed.Cross;
@@ -83,28 +71,27 @@ namespace Assets.Scripts
             OnGameStartSignal.Dispatch(this);
         }
 
-        public void Reset()
+        public void Quit()
         {
-            Player1 = new Player("Player X", 0, Seed.Cross);
-            Player2 = new Player("Player O", 0, Seed.Nought);
-        }
+            CurrentState = GameState.MainMenu;
+            HideBoard();
+            OnGameQuitSignal.Dispatch();
 
-        public void HideBoard()
-        {
-            board.gameObject.SetActive(false);
+            if (NetworkService.IsConnected)
+            {
+                NetworkService.Disconnect();
+            }
         }
 
         protected override void Awake()
         {
             base.Awake();
-            if (Instance == null)
-            {
-                Instance = this;
-            }
-            else
-            {
-                Destroy(gameObject);
-            }
+
+            OnGameStartSignal = new Signal<Game>();
+            OnGameResultSignal = new Signal<Game>();
+            OnGameQuitSignal = new Signal();
+
+            ServiceLocator.AddService<IGameService>(this);
         }
 
         protected override void Start()
@@ -119,18 +106,20 @@ namespace Assets.Scripts
             board.SetPlayer(Seed.Empty);
             board.gameObject.SetActive(false);
 
-            NetworkMediator.Instance.OnAllPlayersConnectedSignal.AddListener(OnAllPlayersConnected);
-            NetworkMediator.Instance.OnDisconnectedFromMasterSignal.AddListener(OnDisconnectedFromMaster);
-            NetworkMediator.Instance.OnRemoteBoardChangeSignal.AddListener(OnRemoteBoardChange);
+            NetworkService.OnAllPlayersConnectedSignal.AddListener(OnAllPlayersConnected);
+            NetworkService.OnDisconnectedFromMasterSignal.AddListener(OnDisconnectedFromMaster);
+            NetworkService.OnRemoteBoardChangeSignal.AddListener(OnRemoteBoardChange);
         }
 
         protected override void OnDestroy()
         {
             base.OnDestroy();
 
-            NetworkMediator.Instance.OnAllPlayersConnectedSignal.RemoveListener(OnAllPlayersConnected);
-            NetworkMediator.Instance.OnDisconnectedFromMasterSignal.RemoveListener(OnDisconnectedFromMaster);
-            NetworkMediator.Instance.OnRemoteBoardChangeSignal.RemoveListener(OnRemoteBoardChange);
+            NetworkService.OnAllPlayersConnectedSignal.RemoveListener(OnAllPlayersConnected);
+            NetworkService.OnDisconnectedFromMasterSignal.RemoveListener(OnDisconnectedFromMaster);
+            NetworkService.OnRemoteBoardChangeSignal.RemoveListener(OnRemoteBoardChange);
+
+            ServiceLocator.RemoveService<IGameService>();
         }
 
         protected override void Update()
@@ -148,6 +137,17 @@ namespace Assets.Scripts
                     Quit();
                 }
             }
+        }
+
+        private void Reset()
+        {
+            Player1 = new Player("Player X", 0, Seed.Cross);
+            Player2 = new Player("Player O", 0, Seed.Nought);
+        }
+
+        private void HideBoard()
+        {
+            board.gameObject.SetActive(false);
         }
 
         private void OnAllPlayersConnected()
@@ -198,10 +198,10 @@ namespace Assets.Scripts
 
             board.SetPlayer(nextPlayer);
 
-            if (NetworkMediator.Instance.IsConnected && player == Player1.Type)
+            if (NetworkService.IsConnected && player == Player1.Type)
             {
                 board.SetPlayer(Seed.Empty);
-                NetworkMediator.Instance.SendBoardChange(player, row, col);
+                NetworkService.SendBoardChange(player, row, col);
             }
         }
     }

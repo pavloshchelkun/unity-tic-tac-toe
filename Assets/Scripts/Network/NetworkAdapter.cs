@@ -4,18 +4,23 @@ using UnityEngine;
 
 namespace Assets.Scripts.Network
 {
-    public class NetworkMediator : Photon.MonoBehaviour
+    public class NetworkAdapter : Photon.MonoBehaviour, INetworkService
     {
-        public static NetworkMediator Instance { get; private set; }
+        public Signal OnBeginConnectingSignal { get; private set; }
 
-        public readonly Signal OnBeginConnectingSignal = new Signal();
-        public readonly Signal OnConnectedToMasterSignal = new Signal();
-        public readonly Signal OnDisconnectedFromMasterSignal = new Signal();
-        public readonly Signal<string> OnConnectionFailSignal = new Signal<string>();
-        public readonly Signal OnJoinedRoomSignal = new Signal();
-        public readonly Signal OnAllPlayersConnectedSignal = new Signal();
-        public readonly Signal<Seed, int, int> OnRemoteBoardChangeSignal = new Signal<Seed, int, int>();
-        public readonly Signal OnNewGameStartedSignal = new Signal();
+        public Signal OnConnectedToMasterSignal { get; private set; }
+
+        public Signal OnDisconnectedFromMasterSignal { get; private set; }
+
+        public Signal<string> OnConnectionFailSignal { get; private set; }
+
+        public Signal OnJoinedRoomSignal { get; private set; }
+
+        public Signal OnAllPlayersConnectedSignal { get; private set; }
+
+        public Signal<Seed, int, int> OnRemoteBoardChangeSignal { get; private set; }
+
+        public Signal OnNewGameStartedSignal { get; private set; }
 
         public string PlayerName
         {
@@ -36,7 +41,7 @@ namespace Assets.Scripts.Network
 
         public string OpponentName
         {
-            get 
+            get
             {
                 if (PhotonNetwork.connected && PhotonNetwork.otherPlayers.Length > 0)
                 {
@@ -46,8 +51,8 @@ namespace Assets.Scripts.Network
             }
         }
 
-        public bool HasAllPlayers 
-        { 
+        public bool HasAllPlayers
+        {
             get
             {
                 return PhotonNetwork.connected && PhotonNetwork.room != null && PhotonNetwork.room.playerCount == 2;
@@ -62,18 +67,6 @@ namespace Assets.Scripts.Network
         public bool IsConnected
         {
             get { return PhotonNetwork.connected; }
-        }
-
-        private void Awake()
-        {
-            if (Instance == null)
-            {
-                Instance = this;
-            }
-            else
-            {
-                Destroy(gameObject);
-            }
         }
 
         public void Connect()
@@ -96,24 +89,19 @@ namespace Assets.Scripts.Network
             PhotonNetwork.Disconnect();
         }
 
-        public bool JoinRoom(string roomName)
+        public void JoinRoom(string roomName)
         {
-            return PhotonNetwork.JoinRoom(roomName);
+            PhotonNetwork.JoinRoom(roomName);
         }
 
-        public bool JoinRandomRoom()
+        public void JoinRandomRoom()
         {
-            return PhotonNetwork.JoinRandomRoom();
+            PhotonNetwork.JoinRandomRoom();
         }
 
-        public bool CreateRoom(string roomName)
+        public void CreateRoom(string roomName)
         {
-            return PhotonNetwork.CreateRoom(roomName, new RoomOptions() { maxPlayers = 2 }, TypedLobby.Default);
-        }
-
-        public void LeaveRoom()
-        {
-            PhotonNetwork.LeaveRoom();
+            PhotonNetwork.CreateRoom(roomName, new RoomOptions() { maxPlayers = 2 }, TypedLobby.Default);
         }
 
         public List<string> GetRoomList()
@@ -129,6 +117,41 @@ namespace Assets.Scripts.Network
             }
 
             return list;
+        }
+
+        public void SendNewGameStarted()
+        {
+            if (PhotonNetwork.room != null && PhotonNetwork.room.playerCount == 2)
+            {
+                photonView.RPC("OnNewGameStart", PhotonTargets.OthersBuffered);
+            }
+        }
+
+        public void SendBoardChange(Seed seed, int row, int col)
+        {
+            if (PhotonNetwork.room != null && PhotonNetwork.room.playerCount == 2)
+            {
+                photonView.RPC("OnRemoteBoardChange", PhotonTargets.OthersBuffered, (int)seed, row, col);
+            }
+        }
+
+        private void Awake()
+        {
+            OnBeginConnectingSignal = new Signal();
+            OnConnectedToMasterSignal = new Signal();
+            OnDisconnectedFromMasterSignal = new Signal();
+            OnConnectionFailSignal = new Signal<string>();
+            OnJoinedRoomSignal = new Signal();
+            OnAllPlayersConnectedSignal = new Signal();
+            OnRemoteBoardChangeSignal = new Signal<Seed, int, int>();
+            OnNewGameStartedSignal = new Signal();
+
+            ServiceLocator.AddService<INetworkService>(this);
+        }
+
+        private void OnDestroy()
+        {
+            ServiceLocator.RemoveService<INetworkService>();
         }
 
         private void OnConnectedToMaster()
@@ -175,26 +198,10 @@ namespace Assets.Scripts.Network
             Disconnect();
         }
 
-        public void SendNewGameStarted()
-        {
-            if (PhotonNetwork.room != null && PhotonNetwork.room.playerCount == 2)
-            {
-                photonView.RPC("OnNewGameStart", PhotonTargets.OthersBuffered);
-            }
-        }
-
         [RPC]
         private void OnNewGameStart()
         {
             OnNewGameStartedSignal.Dispatch();
-        }
-
-        public void SendBoardChange(Seed seed, int row, int col)
-        {
-            if (PhotonNetwork.room != null && PhotonNetwork.room.playerCount == 2)
-            {
-                photonView.RPC("OnRemoteBoardChange", PhotonTargets.OthersBuffered, (int)seed, row, col);
-            }
         }
 
         [RPC]

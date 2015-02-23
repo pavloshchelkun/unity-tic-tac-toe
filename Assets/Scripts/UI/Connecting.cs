@@ -13,10 +13,10 @@ namespace Assets.Scripts.UI
         public void OnBack()
         {
             Hide();
-            Game.Instance.Quit();
+            GameService.Quit();
         }
 
-        public override void Show()
+        protected override void Show()
         {
             base.Show();
 
@@ -29,18 +29,18 @@ namespace Assets.Scripts.UI
         {
             base.Start();
 
-            NetworkMediator.Instance.OnBeginConnectingSignal.AddListener(Show);
-            NetworkMediator.Instance.OnConnectedToMasterSignal.AddListener(OnConnectedToMaster);
-            NetworkMediator.Instance.OnConnectionFailSignal.AddListener(OnConnectionFail);
+            NetworkService.OnBeginConnectingSignal.AddListener(Show);
+            NetworkService.OnConnectedToMasterSignal.AddListener(OnConnectedToMaster);
+            NetworkService.OnConnectionFailSignal.AddListener(OnConnectionFail);
         }
 
         protected override void OnDestroy()
         {
             base.OnDestroy();
 
-            NetworkMediator.Instance.OnBeginConnectingSignal.RemoveListener(Show);
-            NetworkMediator.Instance.OnConnectedToMasterSignal.RemoveListener(OnConnectedToMaster);
-            NetworkMediator.Instance.OnConnectionFailSignal.RemoveListener(OnConnectionFail);
+            NetworkService.OnBeginConnectingSignal.RemoveListener(Show);
+            NetworkService.OnConnectedToMasterSignal.RemoveListener(OnConnectedToMaster);
+            NetworkService.OnConnectionFailSignal.RemoveListener(OnConnectionFail);
         }
 
         private void OnConnectedToMaster()

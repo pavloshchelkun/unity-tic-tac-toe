@@ -5,20 +5,20 @@
         public void OnOnlineGame()
         {
             Hide();
-            Game.Instance.PlayOnline();
+            GameService.PlayOnline();
         }
 
         public void OnOfflineGame()
         {
             Hide();
-            Game.Instance.PlayOffline();
+            GameService.PlayOffline();
         }
 
         protected override void Start()
         {
             base.Start();
 
-            Game.Instance.OnGameQuitSignal.AddListener(Show);
+            GameService.OnGameQuitSignal.AddListener(Show);
 
             Show();
         }
@@ -27,7 +27,7 @@
         {
             base.OnDestroy();
 
-            Game.Instance.OnGameQuitSignal.RemoveListener(Show);
+            GameService.OnGameQuitSignal.RemoveListener(Show);
         }
     }
 }
